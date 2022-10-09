@@ -2,7 +2,9 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -43,18 +45,17 @@ public class ExcelGenerator {
         Map<String, Integer> map = new LinkedHashMap<>();
         List<Integer> indexOfGiornateDaPagare = new LinkedList<>();
 
-        for (int i = 0; i < inputSheet.getLastRowNum();i++) {
+        for (int i = 0; i <= inputSheet.getLastRowNum(); i++) {
             Row inputRow = inputSheet.getRow(i);
             if (i == 0) {
                 Row row = sheet.createRow(0);
                 copyRow(inputRow, row, true);
             } else {
                 Cell cell = inputRow.getCell(0);
-                String comune = cell.getStringCellValue();
+                String comune = cell.getStringCellValue().toUpperCase();
                 if (!map.containsKey(comune)) {
                     map.put(comune, 1);
-                }
-                else {
+                } else {
                     map.put(comune, map.get(comune) + 1);
                     if (map.get(comune) >= 3) {
                         indexOfGiornateDaPagare.add(i);
@@ -92,12 +93,17 @@ public class ExcelGenerator {
         for (int c = 0; c < oldRow.getPhysicalNumberOfCells(); c++) {
             Cell cell = newRow.createCell(c);
             if (oldRow.getCell(c).getCellType().equals(CellType.STRING)) {
-                cell.setCellValue(oldRow.getCell(c).getStringCellValue());
+                cell.setCellValue(oldRow.getCell(c).getStringCellValue().toUpperCase());
             } else {
-                DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
                 Date date = oldRow.getCell(c).getDateCellValue();
-                String cellValue = df.format(date);
-                cell.setCellValue(cellValue);
+                try {
+                    DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
+                    String cellValue = df.format(date);
+                    cell.setCellValue(cellValue);
+                } catch (Exception e) {
+                    System.out.println("Impossibile recuperare la data per " + date);
+                    System.out.println(e.getMessage());
+                }
             }
 
             if (isHeader) {
